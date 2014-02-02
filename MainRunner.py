@@ -1,0 +1,2 @@
+from moodle import *
+main()

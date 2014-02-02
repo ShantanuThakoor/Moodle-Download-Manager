@@ -1,3 +1,4 @@
+from crontab import CronTab
 from bs4 import *
 from requests import *
 from mechanize import *
@@ -7,6 +8,7 @@ from layout2 import *
 from layout3 import *
 class MoodleBrowser:
 	path=""
+	filesDownloaded=[]
 	courseList=[]
 	b=""
 	defaultUrl="http://moodle.iitb.ac.in/"
@@ -84,6 +86,7 @@ class MoodleBrowser:
 
 	def getCourseUrl(self,course):
 		courseUrl=[]
+		print course
 		soup = BeautifulSoup(self.b.response().read())
 		for link in soup.find_all('a'):
 			if(link.get('title') != "Click to enter this course"):
@@ -119,9 +122,18 @@ class MoodleBrowser:
 				continue
 			print name3				
 			self.b.retrieve(downloadLink,os.path.join(p,name3))
-			
+			self.filesDownloaded.append(os.path.join(p,name3))
 		
 
+	def writeDaemon(self, courses, timeChoice):
+		out=open("daemon.txt",'w')
+		out.write(self.username+"\n")
+		out.write(self.password+"\n")
+		out.write(self.path+"\n")
+		out.write(str(timeChoice)+"\n")
+		for course in courses:
+			out.write(course)
+			out.write("\n")
 
 	def downloadAll(self, url, s):
 
@@ -152,11 +164,31 @@ class MoodleBrowser:
 			self.b.open("http://moodle.iitb.ac.in")			
 			courseUrl=self.getCourseUrl(course)
 			print courseUrl
-			self.downloadAll(courseUrl[0],course)
+			if len(courseUrl)>0:
+				self.downloadAll(courseUrl[0],course)
 			if len(courseUrl)==2:
 				self.downloadAll(courseUrl[1],course)
-
-
+	def activateDaemon(self, t):
+		cron=CronTab(user=True)
+		job=cron.new(command="MoodleDaemon.py")
+		if(t==1):
+			job.week.every(1)
+		if(t==2):
+			job.day.every(1)
+		if(t==3):
+			job.hour.every(1)
+		#job.append.every_reboot()
+		job.enable()
+		
+	def deactivateDaemon(self):
+		cron=CronTab(user=True)
+		
+		
+		j=cron.find_command("MoodleDaemon.py")
+		try:
+			cron.remove(job)		
+		except:
+			j=""
 	
 def main():
 	
@@ -179,8 +211,9 @@ def main():
 	if(mb.write1):
 		mb.writeToFile()
 
-	data2={"error": "False", "name":mb.name, "check":"False","path":"","courses":mb.courseList, "output":o}
-
+	data2={"error": "False", "name":mb.name, "check":"False","path":"","courses":mb.courseList, "output":o, "timeChoice":0}
+	
+	#0: never 1:weekly 2:daily 3:hourly -1:noChange
 	#use GUI2 to get data2 and update mb.path
 	base2=Base2(data2)
 	base2.main()
@@ -190,5 +223,13 @@ def main():
 	mb.write2=not data2["check"]
 	mb.downloadCourse(data2)
 	mb.writeToFile(mb.write2)
-	
-main()
+	if data2["timeChoice"]!=-1:
+		mb.writeDaemon(data2["output"],data2["timeChoice"])
+	elif data2["timeChoice"]==0:
+		mb.deactivateDaemon()
+	else:
+		mb.deactivateDaemon()
+		mb.activateDaemon(data2["timeChoice"])
+
+
+#main()

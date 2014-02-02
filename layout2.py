@@ -6,7 +6,27 @@ import gtk
 import os
 class Base2:
 	a={}	
+	
+	def dont_run(self, radiobutton):
+		if radiobutton.get_active():
+			self.a["timeChoice"]=0
+		
+	def save_settings(self, radiobutton):
+		if radiobutton.get_active():
+			self.a["timeChoice"]=-1
 
+ 	def save_hour(self, radiobutton):
+		if radiobutton.get_active():
+			self.a["timeChoice"]=3
+
+	def save_day(self, radiobutton):
+		if radiobutton.get_active():
+			self.a["timeChoice"]=2
+
+	def save_week(self, radiobutton):
+		if radiobutton.get_active():
+			self.a["timeChoice"]=1
+		
 	def combo_text(self, widget):
 		#self.textbook.set_text(widget.get_active_text())
 		
@@ -21,7 +41,7 @@ class Base2:
 
 	def proceed(self,widget):
 		if len(self.a["output"])==0 or self.a["path"]=="":
-			err=gtk.MessageDialog(None, gtk.DIALOG_DESTROY_WITH_PARENT,gtk.MESSAGE_ERROR,gtk.BUTTONS_CLOSE,"Please Specify Filename and Course")													
+			err=gtk.MessageDialog(None, gtk.DIALOG_DESTROY_WITH_PARENT,gtk.MESSAGE_ERROR,gtk.BUTTONS_CLOSE,"Please 	Specify Filename and Course")													
 			err.run()
 			err.destroy()	#to print error message
 		else:
@@ -70,7 +90,7 @@ class Base2:
 				self.a["path"]=arr[2].strip("\n").strip(" ")				
 		self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
 		self.window.set_position(gtk.WIN_POS_CENTER)
-		self.window.set_size_request(650,300)
+		self.window.set_size_request(650,400)
 		self.window.set_title("MoodleSync By DeathMegatron2000")
 							
 		self.button1 = gtk.Button("Submit")
@@ -96,7 +116,7 @@ class Base2:
 		self.checker.show()		
 		
 		self.label1 = gtk.Label(" Select Destination Folder ")
-		self.label2 = gtk.Label(" Choose your Courses (Upto 7) ")
+		self.label2 = gtk.Label(" Choose your Courses ")
 		self.label3 = gtk.Label(("Welcome Back " + self.a["name"]))
 		
 		self.textview=gtk.TextView()
@@ -116,19 +136,42 @@ class Base2:
 		self.combo.connect("changed", self.combo_text)
 		for x in range (0,len(self.a["courses"])):
 			self.combo.append_text(self.a["courses"][x])
-				
+		
 		fixed=gtk.Fixed()
+		self.radio=gtk.RadioButton(None, "Save Existing Settings")
+		self.radio.connect("toggled", self.save_settings)
+		self.radio.set_active(True)	
+		fixed.put(self.radio,90,225)
+		self.radio.show()
+		self.radio = gtk.RadioButton(self.radio, "Do not Run In Background")
+		self.radio.connect("toggled", self.dont_run)
+		fixed.put(self.radio,90,270)
+		self.radio.show()
+		self.radio=gtk.RadioButton( self.radio, "Save Courses and Notify every hour")
+		self.radio.connect("toggled", self.save_hour)
+		fixed.put(self.radio,90,295)		
+		self.radio.show()
+		self.radio=gtk.RadioButton( self.radio, "Save Courses and Notify every day")
+		self.radio.connect("toggled", self.save_day)
+		fixed.put(self.radio,90,320)
+		self.radio.show()
+		self.radio=gtk.RadioButton( self.radio, "Save Courses and Notify every Week")
+		self.radio.connect("toggled", self.save_week)
+		fixed.put(self.radio,90,345)
+		self.radio.show()
+		
+				
+		
 		fixed.put(self.label1,90,50)
 		fixed.put(self.label2,400,50)
-		fixed.put(self.button1,280,200)
+		fixed.put(self.button1,280,175)
 		fixed.put(self.button2,140,75)
 		fixed.put(self.combo,400,75)
 		fixed.put(self.label3,250,25)
 		fixed.put(self.textview,400,125)
 		fixed.put(self.textview2,90,125)
-
-						#to display all the buttons
 		fixed.put(self.checker,90,180)
+		
 		self.window.add(fixed)
 		self.window.show_all()
 		self.window.connect("destroy", self.destroy)
@@ -136,11 +179,11 @@ class Base2:
 	def main(self):
 		gtk.main()
 
-
-'''courseList=["MA 106", "CS 101", "BB 101", "CE 102", "MM 152", "ME 102", "EE 112"]
+'''
+courseList=["MA 106", "CS 101", "BB 101", "CE 102", "MM 152", "ME 102", "EE 112"]
 name = "Shantanu"
 output=[]
-a={"Courses":courseList,"Name":name,"output":output, "path":"", "check":False}
+a={"courses":courseList,"name":name,"output":output, "path":"", "check":False, "timechoose":-1}
 base=Base2(a)
 base.main()
 a=base.a
